@@ -1,0 +1,72 @@
+[
+  {
+    "customer_id": "C001",
+    "name": "Customer_1",
+    "email": "customer1@example.com",
+    "vip": false,
+    "address": "Street 1, City"
+  },
+  {
+    "customer_id": "C002",
+    "name": "Customer_2",
+    "email": "customer2@example.com",
+    "vip": false,
+    "address": "Street 2, City"
+  },
+  {
+    "customer_id": "C003",
+    "name": "Customer_3",
+    "email": "customer3@example.com",
+    "vip": false,
+    "address": "Street 3, City"
+  },
+  {
+    "customer_id": "C004",
+    "name": "Customer_4",
+    "email": "customer4@example.com",
+    "vip": false,
+    "address": "Street 4, City"
+  },
+  {
+    "customer_id": "C005",
+    "name": "Customer_5",
+    "email": "customer5@example.com",
+    "vip": false,
+    "address": "Street 5, City"
+  },
+  {
+    "customer_id": "C006",
+    "name": "Customer_6",
+    "email": "customer6@example.com",
+    "vip": false,
+    "address": "Street 6, City"
+  },
+  {
+    "customer_id": "C007",
+    "name": "Customer_7",
+    "email": "customer7@example.com",
+    "vip": false,
+    "address": "Street 7, City"
+  },
+  {
+    "customer_id": "C008",
+    "name": "Customer_8",
+    "email": "customer8@example.com",
+    "vip": false,
+    "address": "Street 8, City"
+  },
+  {
+    "customer_id": "C009",
+    "name": "Customer_9",
+    "email": "customer9@example.com",
+    "vip": false,
+    "address": "Street 9, City"
+  },
+  {
+    "customer_id": "C010",
+    "name": "Customer_10",
+    "email": "customer10@example.com",
+    "vip": true,
+    "address": "Street 10, City"
+  }
+]

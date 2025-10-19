@@ -1,0 +1,52 @@
+[
+  {
+    "truck_id": "TR001",
+    "type": "Reefer",
+    "total_capacity_m3": 22.1,
+    "cold_capacity_m3": 13.1,
+    "weight_limit_kg": 11650.5,
+    "fixed_cost": 425.2,
+    "min_utilization": 0.6,
+    "reserve_fraction": 0.06
+  },
+  {
+    "truck_id": "TR002",
+    "type": "Reefer",
+    "total_capacity_m3": 32.9,
+    "cold_capacity_m3": 11.9,
+    "weight_limit_kg": 8069.7,
+    "fixed_cost": 504.17,
+    "min_utilization": 0.6,
+    "reserve_fraction": 0.06
+  },
+  {
+    "truck_id": "TD001",
+    "type": "Dry",
+    "total_capacity_m3": 23.2,
+    "cold_capacity_m3": 0.0,
+    "weight_limit_kg": 11746.5,
+    "fixed_cost": 421.15,
+    "min_utilization": 0.75,
+    "reserve_fraction": 0.07
+  },
+  {
+    "truck_id": "TD002",
+    "type": "Dry",
+    "total_capacity_m3": 31.3,
+    "cold_capacity_m3": 0.0,
+    "weight_limit_kg": 10371.3,
+    "fixed_cost": 464.97,
+    "min_utilization": 0.75,
+    "reserve_fraction": 0.05
+  },
+  {
+    "truck_id": "TD003",
+    "type": "Dry",
+    "total_capacity_m3": 30.0,
+    "cold_capacity_m3": 0.0,
+    "weight_limit_kg": 11836.9,
+    "fixed_cost": 435.96,
+    "min_utilization": 0.75,
+    "reserve_fraction": 0.05
+  }
+]
