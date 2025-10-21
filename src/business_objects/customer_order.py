@@ -124,11 +124,11 @@ class CustomerOrder:
         customer_id: str,
         item_list: Dict[str, int],
         due_time_str: str,
-        products: Mapping[str, Item],
+        items: Mapping[str, Item],
     ) -> "CustomerOrder":
         """Convenience constructor that auto-computes all aggregates."""
         obj = cls(order_id=order_id, customer_id=customer_id, item_list=item_list, due_time_str=due_time_str)
-        obj.compute_from_items(products)
+        obj.compute_from_items(items)
         return obj
 
     # ------------------------------------------------------------------ #
