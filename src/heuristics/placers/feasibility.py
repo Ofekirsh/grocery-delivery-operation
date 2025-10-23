@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from .base import StateView, FeasibilityService, Policy
 
+EPS = 1e-9
+
 
 class SimpleFeasibility(FeasibilityService):
     """
@@ -9,61 +11,54 @@ class SimpleFeasibility(FeasibilityService):
     """
 
     def fits_order_on_truck(self, state: StateView, order_id: str, truck_id: str, policy: Policy) -> bool:
-        of = state.order_features(order_id)
+        f = state.order_features(order_id)
         r = state.truck_residuals(truck_id)
+        t = state.truck_features(truck_id)
 
-        v_eff = float(of.effective_volume_m3)
-        q_cold = float(of.cold_volume_m3)
-        w_kg  = float(of.weight_kg)
+        # volume & weight must fit everywhere
+        if r.remaining_volume_m3 < f.effective_volume_m3:
+            return False
+        if r.remaining_weight_kg < f.weight_kg:
+            return False
 
-        rem_vol  = float(r.remaining_volume_m3)
-        rem_cold = float(r.remaining_cold_m3)   # 0 for dry
-        rem_wt   = float(r.remaining_weight_kg)
-
-        if v_eff > rem_vol:
-            return False
-        if q_cold > rem_cold:
-            return False
-        if w_kg > rem_wt:
-            return False
+        if f.cold_volume_m3 > 0:
+            if t.type == "reefer":
+                if r.remaining_cold_m3 < f.cold_volume_m3:
+                    return False
+            else:  # dry truck with portable cooler
+                if not self.cooler_feasible(state, order_id, truck_id, policy):
+                    return False
         return True
 
     def cooler_feasible(self, state: StateView, order_id: str, truck_id: str, policy: Policy) -> bool:
-        """
-        Cold-in-dry check:
-          - applies only to DRY trucks
-          - ensures order's cold volume <= remaining cooler capacity
-        Falls back gracefully if state doesn't expose cooler fields.
-        """
-        # policy gate
+        # gate by policy
         if not bool(getattr(policy, "allow_cold_in_dry_B", False)):
             return False
 
-        # truck must be dry
         tfeat = state.truck_features(truck_id)
         if str(getattr(tfeat, "type", "")).lower() != "dry":
             return False
 
-        # order cold volume
         of = state.order_features(order_id)
         q_cold = float(of.cold_volume_m3)
         if q_cold <= 0.0:
-            # nothing cold to justify a cooler placement
-            return False
+            # called only for cold-in-dry paths; treat as "no cooler needed"
+            return False  # or True if you call this unconditionally elsewhere
 
-        # remaining cooler capacity: try residuals first
         r = state.truck_residuals(truck_id)
+
+        # try residual view first
         remaining_cooler = None
         if hasattr(r, "remaining_cooler_m3"):
             remaining_cooler = float(getattr(r, "remaining_cooler_m3"))
 
-        # if not provided, compute from capacity - used with safe fallbacks
         if remaining_cooler is None:
             used = float(getattr(r, "cooler_used_m3", 0.0))
+            cap = float(
+                getattr(tfeat, "cooler_capacity_m3",
+                        getattr(policy, "per_truck_cooler_m3", 0.0))
+            )
+            remaining_cooler = max(0.0, cap - used)
 
-            # prefer a truck-specific cooler capacity if present on features; else policy default
-            truck_cap = float(getattr(tfeat, "cooler_capacity_m3",
-                                      getattr(policy, "per_truck_cooler_m3", 0.0)))
-            remaining_cooler = max(0.0, truck_cap - used)
+        return (remaining_cooler + EPS) >= q_cold
 
-        return q_cold <= remaining_cooler

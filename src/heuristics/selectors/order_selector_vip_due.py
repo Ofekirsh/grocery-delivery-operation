@@ -1,97 +1,146 @@
+# src/heuristics/selectors/order_selector_vip_due.py
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, Iterable, Optional, Tuple
+from typing import Any, List, Tuple, Sequence, Literal
+
+
+# ---- configurable ranking dimensions (lexicographic, left→right) ----
+RankDim = Literal["vip", "due", "alpha", "v_eff", "weight", "order_id"]
 
 
 @dataclass
-class Candidate:
+class OrderRankRow:
     """
-    Selector output: which order to consider next, plus lightweight context.
+    A single line in the ranked order queue (for audit/CSV).
+    `sort_key` is the exact tuple used for lexicographic sorting.
     """
+    rank: int
     order_id: str
-    meta: Dict[str, Any]
+    vip: bool
+    due: str          # "HH:MM"
+    alpha: float      # cold fraction
+    v_eff: float
+    weight: float
+    sort_key: Tuple
 
 
-class VipEarliestDueSelector:
+class OrderLevelSelector:
     """
-    Phase 1 selector: choose the next order by
-      1) VIP first (True > False)
-      2) Earliest due time (ascending)
-      3) Optional tie-breakers: higher cold fraction / larger effective volume
-      4) Stable final tie-break on order_id (lexicographic)
+    Generic order-level selector that ranks all open orders
+    according to a configurable priority `scheme` (e.g., ("vip", "due", "alpha", "v_eff")).
 
-    Expectations (no helper shims; strict field names):
-      - The planner `state` exposes:
-          remaining_orders() -> Iterable[str]
-          order_features(order_id) -> an object `f` with attributes:
-              f.vip : bool
-              f.due_dt : datetime            # must be set (bind 'HH:MM' to a date upstream)
-              f.cold_fraction : float        # αᵢ ∈ [0,1]
-              f.effective_volume_m3 : float  # vᵢᵉᶠᶠ
-              f.weight_kg : float            # wᵢ
+    You control the priority with `scheme`, a sequence of RankDim:
+        - "vip"      : VIP first (True before False)          ↓ (desc as -int(vip))
+        - "due"      : earlier due-time first                 ↑ (ascending datetime)
+        - "alpha"    : higher cold fraction first             ↓
+        - "v_eff"    : larger effective volume first          ↓
+        - "weight"   : heavier first                          ↓
+        - "order_id" : lexicographic tiebreaker               ↑
+
+    Example default (classic behavior): ("vip", "due", "alpha", "v_eff", "order_id")
     """
-
-    name: str = "vip_due"
 
     def __init__(
         self,
         *,
-        prefer_high_alpha: bool = False,
-        prefer_large: bool = False,
+        scheme: Sequence[RankDim] = ("vip", "due", "alpha", "v_eff", "order_id"),
     ) -> None:
-        """
-        Args:
-            prefer_high_alpha: among ties on VIP & due, prefer higher cold_fraction.
-            prefer_large: among remaining ties, prefer larger effective volume.
-        """
-        self.prefer_high_alpha = prefer_high_alpha
-        self.prefer_large = prefer_large
+        self.scheme: Tuple[RankDim, ...] = tuple(scheme)
+        self.last_rank: List[OrderRankRow] = []
 
-    def select_next(self, state: Any) -> Optional[Candidate]:
-        order_ids: Iterable[str] = state.remaining_orders()
-        order_ids = list(order_ids)
+        # quick sanity: no duplicates, only known dims
+        allowed = {"vip", "due", "alpha", "v_eff", "weight", "order_id"}
+        seen = set()
+        for d in self.scheme:
+            if d not in allowed:
+                raise ValueError(f"Unknown rank dimension '{d}'. Allowed: {sorted(allowed)}")
+            if d in seen:
+                raise ValueError(f"Duplicate rank dimension '{d}' in scheme.")
+            seen.add(d)
+
+    # ------------------------- public API ------------------------- #
+
+    def rank_orders(self, state: Any) -> List[OrderRankRow]:
+        """
+        Build and store the full ranked queue.
+
+        Expects `state` to expose:
+          - remaining_orders() -> Iterable[str]
+          - order_features(order_id) -> object f with:
+                f.vip : bool
+                f.due_dt : datetime
+                f.cold_fraction : float
+                f.effective_volume_m3 : float
+                f.weight_kg : float
+        """
+        order_ids = list(state.remaining_orders())
         if not order_ids:
-            return None
+            self.last_rank = []
+            return self.last_rank
 
         rows = []
         for oid in order_ids:
             f = state.order_features(oid)
 
-            # Strict attribute access (no duck-typing helpers).
+            # strict fields (fail fast if missing)
             vip: bool = bool(f.vip)
             due: datetime = f.due_dt
             if not isinstance(due, datetime):
-                raise AttributeError("order_features(…) must provide a datetime in `due_dt`.")
+                raise AttributeError("order_features(...).due_dt must be a datetime")
 
             alpha: float = float(f.cold_fraction)
             v_eff: float = float(f.effective_volume_m3)
             weight: float = float(f.weight_kg)
 
-            rows.append((oid, vip, due, alpha, v_eff, weight))
+            key = self._make_sort_key(oid, vip, due, alpha, v_eff, weight)
+            rows.append((oid, vip, due, alpha, v_eff, weight, key))
 
-        # sort by: VIP desc → due asc → optional alpha desc → optional v_eff desc → order_id asc
-        def sort_key(row: Tuple[str, bool, datetime, float, float, float]):
-            oid, vip, due, alpha, v_eff, _w = row
-            k_vip = -int(vip)                             # VIP first
-            k_due = due                                   # earlier due first
-            k_alpha = -alpha if self.prefer_high_alpha else 0.0
-            k_veff = -v_eff if self.prefer_large else 0.0
-            k_oid = oid                                   # stable fallback
-            return (k_vip, k_due, k_alpha, k_veff, k_oid)
+        rows.sort(key=lambda r: r[-1])
 
-        rows.sort(key=sort_key)
-        oid, vip, due, alpha, v_eff, weight = rows[0]
+        self.last_rank = [
+            OrderRankRow(
+                rank=i + 1,
+                order_id=oid,
+                vip=vip,
+                due=due.strftime("%H:%M"),
+                alpha=alpha,
+                v_eff=v_eff,
+                weight=weight,
+                sort_key=key,
+            )
+            for i, (oid, vip, due, alpha, v_eff, weight, key) in enumerate(rows)
+        ]
+        return self.last_rank
 
-        meta = {
-            "vip": vip,
-            "due": due.strftime("%H:%M"),
-            "alpha": alpha,
-            "v_eff": v_eff,
-            "weight": weight,
-            "rule": "VIP→Due"
-                    + ("+α" if self.prefer_high_alpha else "")
-                    + ("+size" if self.prefer_large else ""),
-        }
-        return Candidate(order_id=oid, meta=meta)
+    # ------------------------ internals -------------------------- #
+
+    def _make_sort_key(
+        self,
+        oid: str,
+        vip: bool,
+        due: datetime,
+        alpha: float,
+        v_eff: float,
+        weight: float,
+    ) -> Tuple:
+        """
+        Map the configured `scheme` to a lexicographic tuple.
+        Directions (fixed): vip↓, due↑, alpha↓, v_eff↓, weight↓, order_id↑
+        """
+        key_parts: List[object] = []
+        for dim in self.scheme:
+            if dim == "vip":
+                key_parts.append(-int(vip))        # True first
+            elif dim == "due":
+                key_parts.append(due)              # earlier first
+            elif dim == "alpha":
+                key_parts.append(-alpha)           # higher first
+            elif dim == "v_eff":
+                key_parts.append(-v_eff)           # larger first
+            elif dim == "weight":
+                key_parts.append(-weight)          # heavier first
+            elif dim == "order_id":
+                key_parts.append(oid)              # lexicographic
+        return tuple(key_parts)

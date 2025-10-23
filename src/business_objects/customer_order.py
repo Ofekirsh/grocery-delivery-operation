@@ -132,6 +132,75 @@ class CustomerOrder:
         return obj
 
     # ------------------------------------------------------------------ #
+    # JSON constructors
+    # ------------------------------------------------------------------ #
+    @classmethod
+    def from_json(
+        cls,
+        data: dict,
+        items: Mapping[str, Item],
+        *,
+        recompute: bool = True,
+    ) -> "CustomerOrder":
+        """
+        Build a CustomerOrder from a JSON dict.
+
+        Expected keys (export-compatible):
+            - "order_id": str
+            - "customer_id": str
+            - "item_list" OR "items": {item_id: qty, ...}
+            - "due_time_str": "HH:MM"
+
+        Options:
+            recompute: if True (default), recompute all aggregates (qᵢ, qᵢᶜᵒˡᵈ, wᵢ, vᵢᵉᶠᶠ, αᵢ)
+                       from the provided `items` catalog, ignoring any aggregate
+                       numbers that might be present in the JSON.
+
+        Notes on notation:
+            qᵢ        = total volume (m³)
+            qᵢᶜᵒˡᵈ    = cold volume (m³)
+            wᵢ        = weight (kg)
+            vᵢᵉᶠᶠ     = effective (padded) volume (m³)
+            αᵢ        = cold fraction = qᵢᶜᵒˡᵈ / qᵢ
+        """
+        oid = str(data["order_id"])
+        cid = str(data["customer_id"])
+
+        # Accept either "item_list" or "items" in JSON
+        raw_items = data.get("item_list") or data.get("items")
+        if not isinstance(raw_items, dict):
+            raise TypeError("orders JSON must include 'item_list' (or 'items') as a dict of item_id -> qty")
+
+        # Coerce all quantities to int and ids to str
+        ilist: Dict[str, int] = {}
+        for k, v in raw_items.items():
+            ilist[str(k)] = int(v)
+
+        due = str(data.get("due_time_str") or data.get("due") or "23:59")
+
+        obj = cls(
+            order_id=oid,
+            customer_id=cid,
+            item_list=ilist,
+            due_time_str=due,
+        )
+
+        if recompute:
+            obj.compute_from_items(items)
+        else:
+            # If you really want to trust saved aggregates in JSON:
+            obj.total_volume_m3 = float(data.get("total_volume_m3", obj.total_volume_m3))
+            obj.cold_volume_m3 = float(data.get("cold_volume_m3", obj.cold_volume_m3))
+            obj.weight_kg = float(data.get("weight_kg", obj.weight_kg))
+            obj.effective_volume_m3 = float(data.get("effective_volume_m3", obj.effective_volume_m3))
+            if obj.total_volume_m3 > 1e-12:
+                obj.cold_fraction = obj.cold_volume_m3 / obj.total_volume_m3
+            else:
+                obj.cold_fraction = 0.0
+
+        return obj
+
+    # ------------------------------------------------------------------ #
     # Validation
     # ------------------------------------------------------------------ #
 
@@ -143,3 +212,11 @@ class CustomerOrder:
                 raise TypeError("item_list keys must be item_id strings.")
             if not isinstance(qty, int):
                 raise TypeError("item_list values must be integer quantities.")
+
+
+def load_orders_from_json_list(json_list: list[dict], items: Mapping[str, Item]) -> dict[str, CustomerOrder]:
+    orders: dict[str, CustomerOrder] = {}
+    for rec in json_list:
+        o = CustomerOrder.from_json(rec, items, recompute=True)
+        orders[o.order_id] = o
+    return orders

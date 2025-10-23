@@ -32,6 +32,7 @@ class Truck:
     departure_time: Optional[str] = field(default=None, repr=False)
     schedule: List[Tuple[str, str]] = field(default_factory=list, repr=False)  # (order_id, eta 'HH:MM')
 
+    cooler_capacity_m3: float = 0.0  # optional, used for dry trucks with built-in coolers
     # ---------- convenience ----------
     def residual_volume_m3(self) -> float:
         """Remaining usable volume after reserve is honored."""

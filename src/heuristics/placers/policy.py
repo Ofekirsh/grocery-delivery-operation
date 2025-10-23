@@ -8,12 +8,19 @@ class SimplePolicy:
     Add fields here gradually as you need them.
     """
 
-    # Bucket A (cold-mandatory) — can we open a new reefer if none of the open ones fit?
+    # Bucket A (cold-mandatory) - can we open a new reefer if none of the open ones fit?
     allow_open_new_reefer_A: bool = True
 
-    # (for later, Bucket B cold-in-dry logic; unused by reefer placer step)
+    # Bucket B cold-in-dry logic; unused by reefer placer step
     allow_cold_in_dry_B: bool = False
     per_truck_cooler_m3: float = 0.0
 
-    # (for later, Bucket C tie-break preference)
-    day_bottleneck: str = "volume"   # or "weight"
+    allow_open_new_dry_B: bool = True
+
+    # Bucket C tie-break preference
+    #day_bottleneck: str = "volume"   # or "weight"
+    alpha_threshold: float = 0.1
+
+    allow_open_new_dry_C: bool = True
+
+

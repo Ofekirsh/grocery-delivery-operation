@@ -12,8 +12,11 @@ from src.heuristics.selectors.item_selector_priority import ItemRank
 @dataclass(frozen=True)
 class OrderFeat:
     effective_volume_m3: float
+    volume_m3: float
     cold_volume_m3: float
     weight_kg: float
+    cold_fraction: float
+    vip: bool
 
 
 @dataclass(frozen=True)
@@ -46,20 +49,28 @@ class SimpleStateView(StateView):
         orders: Dict[str, CustomerOrder],
         open_truck_ids: Iterable[str],
         sorted_items_provider: Dict[str, Sequence[ItemRank]],
+        customers: Dict
     ) -> None:
         self._depot = depot
         self._orders = orders
         self._open = set(open_truck_ids)
         self._sorted = sorted_items_provider  # order_id -> Sequence[ItemRank]
+        self._customers = customers
 
     # ------------------------ StateView protocol ------------------------ #
 
     def order_features(self, order_id: str) -> OrderFeat:
         o = self._orders[order_id]
+        cust = self._customers.get(o.customer_id)
+        is_vip = bool(getattr(cust, "vip", False) if cust is not None else False)
+
         return OrderFeat(
             effective_volume_m3=float(o.effective_volume_m3),
+            volume_m3=float(o.total_volume_m3),
             cold_volume_m3=float(o.cold_volume_m3),
             weight_kg=float(o.weight_kg),
+            cold_fraction=float(o.cold_fraction),
+            vip=is_vip
         )
 
     def truck_features(self, truck_id: str) -> TruckFeat:

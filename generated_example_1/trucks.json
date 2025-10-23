@@ -23,7 +23,7 @@
     "truck_id": "TD001",
     "type": "Dry",
     "total_capacity_m3": 23.2,
-    "cold_capacity_m3": 0.0,
+    "cold_capacity_m3": 0,
     "weight_limit_kg": 11746.5,
     "fixed_cost": 421.15,
     "min_utilization": 0.75,

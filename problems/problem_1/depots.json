@@ -1,0 +1,11 @@
+[
+  {
+    "depot_id": "D001",
+    "location": "Depot_1 City",
+    "available_trucks": [
+      "TR001",
+      "TD001",
+      "TD002"
+    ]
+  }
+]

@@ -5,6 +5,7 @@ from typing import Optional, List, Tuple, Dict, Any, Sequence
 from .base import PackingPlan, PackingPolicy, StateView
 from src.heuristics.selectors.item_selector_priority import ItemRank
 
+
 class SimplePackingPolicy(PackingPolicy):
     """
     STEP 1 (typed): consume pre-sorted Sequence[ItemRank] and map to slots.
@@ -13,6 +14,7 @@ class SimplePackingPolicy(PackingPolicy):
 
     def plan(self, state: StateView, truck_id: str, order_id: str) -> Optional[PackingPlan]:
         seq: Sequence[ItemRank] = state.sorted_items(order_id)  # must be ItemRank objects
+
 
         placements: List[Tuple[str, int, Dict[str, Any]]] = []
         notes: List[str] = [f"simple-pack: order {order_id} → truck {truck_id}, zone='main', layer=1"]
@@ -33,7 +35,7 @@ class SimplePackingPolicy(PackingPolicy):
             q_cold = float(f.get("q_cold", 0.0))  # line cold volume
             fragile_score = float(f.get("fragile_score", 0))  # 0 regular, 1 delicate, 2 fragile
             upright01 = int(f.get("upright01", 0))  # 1 = upright-only
-            sep_tag = str(f.get("sep_tag", "food")).lower()  # "hazardous"/"food"/"non_food"/...
+            sep_tag = str(f.get("sep_tag", "non_food")).lower()  # "hazardous"/"food"/"non_food"/...
 
             # --- zone selection (Separation + Cold) ---
             if sep_tag == "hazardous":

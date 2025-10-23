@@ -1,120 +1,213 @@
 
 # Grocery Loading Planner
 
-This project models the daily logistics of a grocery delivery operation.
+This repository implements a two-phase heuristic planner for grocery delivery operations.
+It integrates order and item prioritization (Phase 1) with truck assignment and loading (Phase 2), supported by a detailed tracking and KPI-evaluation framework.
 
 ---
 
-## Grocery Depot
+##  Phase 1 - Select Next
 
-| Property             | Description                                                                                |
-| -------------------- | ------------------------------------------------------------------------------------------ |
-| **Depot ID**         | Unique identifier for each depot.                                                          |
-| **Location**         | Central facility where all customer orders are prepared and loaded onto trucks.            |
-| **Available trucks** | Set of all vehicles (refrigerated and dry) currently operational and ready for deployment. |
+### **SelectionState**
 
----
+The **`SelectionState`** encapsulates all relevant operational data at the start of the planning day.
+It serves as the shared interface for both the **Order Selector** and the **Item Sorter**.
 
-## Customer
+It provides structured access to:
 
-| Property              | Description                                                                                                                    |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| **Customer ID**       | Unique identifier for each customer.                                                                                           |
-| **Name**              | Full name of the customer.                                                                                                     |
-| **Email address**     | Contact email for notifications and delivery updates.                                                                          |
-| **Priority (VIP)**    | Whether the customer is high-priority and must be served first.                                                                |
-| **Customer order(s)** | Associated order objects linked to this customer. *(In each Customer Order, a `Customer ID` field provides the reverse link.)* |
-| **Address**           | Delivery address of the customer’s supermarket or store.                                                                       |
+* **Order-level features:**
+  volume, cold fraction, weight, due time, VIP status, etc.
+* **Item-level features:**
+  cold indicator, fragile/upright flags, weight, stack limit, etc.
+* **Reference data:**
+  depot configuration, customer attributes, and any precomputed metrics.
+
+The state is immutable during Phase 1 - its role is purely descriptive, not operational.
+All ranking operations read from this state but do not modify it.
 
 ---
 
-## Customer Order
+### **Order Selector**
 
-| Property             | Description                                                                     |
-| -------------------- | ------------------------------------------------------------------------------- |
-| **Order ID**         | Unique reference linked to a customer (via Customer ID).                        |
-| **Customer ID**      | Reference to the associated customer.                                           |
-| **Total volume**     | Total required space, including packaging allowances for fragile items (in m³). |
-| **Cold volume**      | Portion of the order requiring refrigeration (in m³).                           |
-| **Weight**           | Total order weight (in kg).                                                     |
-| **Item list**        | Collection of Item IDs and quantities included in the order.                    |
-| **Due date**         | Requested delivery deadline (HH:MM).                                            |
-| **Cold fraction αᵢ** | Calculated as `cold volume / total volume`, a number between 0 and 1.           |
+The **Order Selector** ranks all orders globally to decide which should be served first.
+It operates based on a **configurable ranking scheme**, allowing different strategic priorities.
 
----
+Each scheme is a sequence of ranking dimensions applied in order of importance (like SQL `ORDER BY`).
+For example:
 
-## Truck
+```python
+scheme = ["vip", "due", "alpha", "v_eff"]
+selector = OrderLevelSelector(scheme=scheme)
+```
 
-| Property                                  | Description                                                     |
-| ----------------------------------------- | --------------------------------------------------------------- |
-| **Truck ID**                              | Unique identifier for each vehicle.                             |
-| **Type**                                  | “Reefer” (refrigerated) or “Dry”.                               |
-| **Total capacity (Qₖ)**                   | Maximum loading volume (m³).                                    |
-| **Cold capacity (Qₖ_cold)**               | Refrigerated space (m³) available in reefer trucks.             |
-| **Weight limit (Wₖ)**                     | Maximum permissible load weight (kg).                           |
-| **Fixed deployment cost (cₖ)**            | Operating cost incurred if the truck is deployed.               |
-| **Minimum utilization threshold (τ_min)** | Minimum fraction of capacity required before departure.         |
-| **Reserve capacity fraction (r)**         | Portion intentionally left unused for flexibility (e.g., 5-8%). |
+Available ranking dimensions include:
+
+* `vip` - prioritize VIP customers
+* `due` - earlier due times first
+* `alpha` - higher cold fraction first
+* `v_eff` - effective volume (smaller first)
+* `w` - weight-based tiebreaker
+
+You can freely compose or extend the scheme to match your business rules.
+The output is a ranked list of `OrderRank` objects, each with the order ID and its feature summary.
 
 ---
 
-## Item
+### **Item Sorter**
 
-| Property                   | Description                                                  |
-| -------------------------- | ------------------------------------------------------------ |
-| **Item ID**                | Unique identifier for each catalog product.                  |
-| **Item name**              | Commercial name used in stores.                              |
-| **Category**               | “Cold” or “Dry”.                                             |
-| **Weight (kg)**            | Per-unit weight.                                             |
-| **Volume (m³)**            | Per-unit volume.                                             |
-| **Dimensions (L×W×H)**     | Physical size in meters.                                     |
-| **Fragility level**        | Regular, delicate, or fragile.                               |
-| **Max stack load (kg)**    | Maximum allowable weight stacked on top.                     |
-| **Liquid (Y/N)**           | Whether it can spill.                                        |
-| **Upright (Y/N)**          | Must stay vertical.                                          |
-| **Separation tag**         | Safety classification (Food, Non-Food, Allergen, Hazardous). |
-| **Space factor (padding)** | Extra space reserved for packaging or handling.              |
+The **Item Sorter** operates *within each ranked order*, producing a local picking or packing priority for its items.
+It also uses a customizable **sorting scheme**, similar to the order selector.
+
+Example:
+
+```python
+scheme = ["cold01", "fragile", "weight", "v_eff"]
+sorter = ItemLevelSorter(scheme=scheme)
+```
+
+Supported dimensions include:
+
+* `cold01` - cold items first
+* `fragile` - handle delicate items early
+* `upright` - prioritize upright-only items
+* `stack_limit` - avoid low stack-load items on the bottom
+* `weight` or `v_eff` - for balancing and space optimization
+
+The sorter returns a sequence of `ItemRank` objects containing:
+
+* `item_id`
+* `qty`
+* structured `features` (weight, volume, cold flag, etc.)
+
+---
+
+### **DayTracker Integration**
+
+All Phase 1 outputs are logged to the **DayTracker** for reproducibility and auditability:
+
+* `record_order_queue()` - stores the global order ranking
+* `record_item_queue()` - stores per-order item rankings
+
+This makes Phase 1 fully transparent:
+you can later inspect or export the prioritized sequences directly as CSV files for analysis or debugging.
 
 ---
 
-## How to Generate an Example
 
-1. **Define a configuration**
-   In `main.py`, set parameters such as:
 
-   * number of items, customers, and orders
-   * number of cold vs. dry trucks
-   * VIP customer fraction
-   * due-date window
-   * depot availability mode (`"all"` or `("sample", k)`)
+## Phase 2 - Place Next
 
-2. **Generate objects**
-   Run:
+### **Placer Orchestrator**
 
-   ```bash
-   python src.main
-   ```
+The central controller for Phase 2.
 
-   The program uses `make_objects(cfg)` to create a realistic daily scenario, printing summaries of each table.
+1. Receives ranked orders from Phase 1.
+2. Determines the **bucket** (A / B / C) for each order:
 
-3. **Export to JSON**
-   The script automatically calls:
+   * **A** - Cold mandatory → Reefer only
+   * **B** - Mixed/Flexible → Prefer reefer, allow dry + cooler if policy allows
+   * **C** - Dry only → Dry trucks
+3. Routes each order to the corresponding *placer function*:
 
-   ```python
-   save_json_files(objs, output_dir="generated_example_1")
-   ```
+   * `assign_to_best_reefer` → Reefer heuristic
+   * `assign_bucket_b_order` → Mixed (reefer or dry+cooler)
+   * `assign_bucket_c_order` → Dry heuristic
+4. Commits accepted placements through `apply_decision`, which:
 
-   This creates a folder containing:
-
-   ```
-   generated_example_1/
-   ├── items.json
-   ├── customers.json
-   ├── orders.json
-   ├── trucks.json
-   └── depots.json
-   ```
-
-   Each file is a clean JSON representation of the generated data - ready for loading into your heuristic or optimization model.
+   * Updates truck loads (`used_volume_m3`, `used_weight_kg`, etc.)
+   * Tracks portable-cooler usage (`cooler_used_m3`)
+   * Records the assignment in `DayTracker`
+   * Logs packing placements for audit
 
 ---
+
+### **Heuristic Schemes**
+
+Each placer ranks candidate trucks with a configurable **scheme** of residual criteria (minimize → tighter fit).
+
+| Function                | Default Scheme                                                       | Notes                          |
+| ----------------------- | -------------------------------------------------------------------- | ------------------------------ |
+| `assign_to_best_reefer` | `("cold","volume","weight")`                                         | Reefer only                    |
+| `assign_bucket_b_order` | Reefer → `("cold","volume","weight")` Dry → `("volume","weight")` | Mixed (Reefer or Dry + Cooler) |
+| `assign_bucket_c_order` | `("volume","weight")`                                                | Dry only                       |
+
+Example – favor volume before cold:
+
+```python
+assign_to_best_reefer(..., ranking_scheme=("volume","cold","weight"))
+```
+
+Unknown dims raise `ValueError`; infeasible trucks are filtered before ranking.
+
+---
+
+### **Policy (`src/heuristics/placers/policy.py`)**
+
+Global knobs controlling placement behavior:
+
+| Parameter                  | Description                                              |
+| -------------------------- | -------------------------------------------------------- |
+| `alpha_threshold`          | Boundary between cold (A), mixed (B), and dry (C) orders |
+| `allow_open_new_reefer_A`  | Open a new reefer when no current one fits               |
+| `allow_cold_in_dry_B`      | Permit cooler use in dry trucks                          |
+| `per_truck_cooler_m3`      | Cooler capacity (m³) for dry trucks                      |
+| `allow_open_new_dry_B / C` | Control new-truck openings                               |
+| `day_bottleneck`           | Not used - `assign_bucket_c_order` already allows choosing scheme `("volume","weight")` or `("weight","volume")` based on daily bottleneck                |
+
+---
+
+### **Feasibility Service**
+
+Encapsulates all constraint checks:
+
+* volume / weight / cold residuals
+* `cooler_feasible()` – verifies that a cold portion can fit into a cooler in dry truck when policy allows
+
+---
+
+### **Loading Policy (`src/heuristics/placers/packing.py`)**
+
+Implements the intra-truck packing logic (`PackingPolicy.plan()`):
+
+* Iterates ranked items and assigns them to:
+
+  * **Zones**: `ambient`, `cold`, `haz`
+  * **Lanes**: `left` vs `right` (balancing load)
+  * **Layers**: `floor` vs `top` for fragile/upright items
+* Returns a structured `PackingPlan` (`placements` + `notes`).
+
+---
+
+## Quality Metrics
+
+| Quality Metric                                            | Description                     |
+| ------------------------------------------------- | ------------------------------- |
+| `N_trucks`                                        | Trucks opened                   |
+| `C_total` / `C_per_vol` / `C_per_w`               | Total & normalized costs        |
+| `E_pack`                                          | Packing efficiency              |
+| `CV_Uvol`                                         | Volume utilization variance     |
+| `MISS_VIP`, `MISS_DUE`                            | Service-level violations        |
+| `VIP_ONTIME`                                      | VIP service ratio               |
+| `COLD_ON_DRY`, `CAP_VIOLS`, `SPLITS`, `UNDER_MIN` | Policy & constraint breaches    |
+| `SUM_q`, `SUM_v_eff`, `SUM_w`                     | Total delivered volume & weight |
+
+---
+
+## Reports
+
+From the `scripts/run.py` driver you can export:
+
+| File              | Generated by                       | Description                                 |
+| ----------------- | ---------------------------------- | ------------------------------------------- |
+| `assignments.csv` | `tracker.export_assignments_csv()` | Detailed item placement (zone, lane, layer) |
+| `per_truck.csv`   | `orchestrator.export_reports()`    | Per-truck KPIs                              |
+| `fleet.csv`       | `orchestrator.export_reports()`    | Aggregate fleet KPIs                        |
+| `orders.csv`      | `tracker.record_order_queue()`     | Phase-1 order ranking                       |
+| `items.csv`       | `tracker.record_item_queue()`      | Phase-1 item ranking                        |
+
+---
+
+## Additional Documentation
+
+- **[Business Objects](src/business_objects/README.md)** - business objects with property definitions
+- **[Scripts](scripts/README.md)** - Generate synthetic instances and run heuristics with configurable parameters

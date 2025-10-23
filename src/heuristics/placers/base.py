@@ -28,7 +28,8 @@ class AssignOrder:
     order_id: str
     truck_id: str
     packing: PackingPlan
-    rationale: str = ""  # why this truck / tie-break details
+    rationale: Any = ""  # why this truck / tie-break details
+    opened_new_truck: bool = False
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -61,6 +62,9 @@ class StateView(Protocol):
     def all_available_trucks(self, *, type_filter: Optional[str] = None) -> Iterable[str]:
         """Return IDs of trucks available to be opened today (not yet deployed)."""
         ...
+
+    def sorted_items(self, order_id):
+        pass
 
 
 class FeasibilityService(Protocol):

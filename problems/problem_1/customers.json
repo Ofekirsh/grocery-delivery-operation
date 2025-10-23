@@ -1,0 +1,37 @@
+[
+  {
+    "customer_id": "C001",
+    "name": "Customer_1",
+    "email": "customer1@example.com",
+    "vip": false,
+    "address": "Street 1, City"
+  },
+  {
+    "customer_id": "C002",
+    "name": "Customer_2",
+    "email": "customer2@example.com",
+    "vip": false,
+    "address": "Street 2, City"
+  },
+  {
+    "customer_id": "C003",
+    "name": "Customer_3",
+    "email": "customer3@example.com",
+    "vip": false,
+    "address": "Street 3, City"
+  },
+  {
+    "customer_id": "C004",
+    "name": "Customer_4",
+    "email": "customer4@example.com",
+    "vip": false,
+    "address": "Street 4, City"
+  },
+  {
+    "customer_id": "C005",
+    "name": "Customer_5",
+    "email": "customer5@example.com",
+    "vip": false,
+    "address": "Street 5, City"
+  }
+]

@@ -1,0 +1,9 @@
+order_id,placed,assigned_truck_count,reason,is_vip,due_met,delay_min
+O0008,True,1,,False,,
+O0007,True,1,,False,,
+O0004,True,1,,False,,
+O0003,True,1,,False,,
+O0002,True,1,,False,,
+O0006,True,1,,False,,
+O0005,True,1,,False,,
+O0001,True,1,,False,,

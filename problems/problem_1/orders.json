@@ -1,0 +1,114 @@
+[
+  {
+    "order_id": "O0001",
+    "customer_id": "C001",
+    "item_list": {
+      "I002": 1
+    },
+    "due_time_str": "20:42",
+    "total_volume_m3": 0.0028,
+    "cold_volume_m3": 0.0,
+    "weight_kg": 0.77,
+    "effective_volume_m3": 0.002856,
+    "cold_fraction": 0.0
+  },
+  {
+    "order_id": "O0002",
+    "customer_id": "C002",
+    "item_list": {
+      "I007": 2,
+      "I002": 3,
+      "I010": 2
+    },
+    "due_time_str": "19:01",
+    "total_volume_m3": 0.0438,
+    "cold_volume_m3": 0.0194,
+    "weight_kg": 26.049999999999997,
+    "effective_volume_m3": 0.04487,
+    "cold_fraction": 0.4429223744292238
+  },
+  {
+    "order_id": "O0003",
+    "customer_id": "C003",
+    "item_list": {
+      "I001": 3,
+      "I002": 2,
+      "I005": 1
+    },
+    "due_time_str": "15:00",
+    "total_volume_m3": 0.0324,
+    "cold_volume_m3": 0.0,
+    "weight_kg": 12.44,
+    "effective_volume_m3": 0.033376,
+    "cold_fraction": 0.0
+  },
+  {
+    "order_id": "O0004",
+    "customer_id": "C004",
+    "item_list": {
+      "I008": 1
+    },
+    "due_time_str": "14:29",
+    "total_volume_m3": 0.0098,
+    "cold_volume_m3": 0.0,
+    "weight_kg": 2.58,
+    "effective_volume_m3": 0.010094,
+    "cold_fraction": 0.0
+  },
+  {
+    "order_id": "O0005",
+    "customer_id": "C005",
+    "item_list": {
+      "I009": 1
+    },
+    "due_time_str": "20:40",
+    "total_volume_m3": 0.007,
+    "cold_volume_m3": 0.0042,
+    "weight_kg": 0.77,
+    "effective_volume_m3": 0.00721,
+    "cold_fraction": 0.6
+  },
+  {
+    "order_id": "O0006",
+    "customer_id": "C003",
+    "item_list": {
+      "I009": 2,
+      "I004": 1,
+      "I003": 3
+    },
+    "due_time_str": "19:03",
+    "total_volume_m3": 0.066,
+    "cold_volume_m3": 0.0396,
+    "weight_kg": 21.43,
+    "effective_volume_m3": 0.06644800000000001,
+    "cold_fraction": 0.6
+  },
+  {
+    "order_id": "O0007",
+    "customer_id": "C001",
+    "item_list": {
+      "I006": 1,
+      "I008": 2,
+      "I001": 2
+    },
+    "due_time_str": "14:05",
+    "total_volume_m3": 0.0373,
+    "cold_volume_m3": 0.0,
+    "weight_kg": 7.47,
+    "effective_volume_m3": 0.038295,
+    "cold_fraction": 0.0
+  },
+  {
+    "order_id": "O0008",
+    "customer_id": "C001",
+    "item_list": {
+      "I010": 1
+    },
+    "due_time_str": "11:27",
+    "total_volume_m3": 0.0097,
+    "cold_volume_m3": 0.00582,
+    "weight_kg": 8.27,
+    "effective_volume_m3": 0.009991,
+    "cold_fraction": 0.6
+  }
+]
