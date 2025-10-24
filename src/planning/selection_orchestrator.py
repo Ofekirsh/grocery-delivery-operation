@@ -66,13 +66,30 @@ class SelectionOrchestrator:
             ranked_items = self.item_sorter.rank_items(self.state, order_id)
             ranked_items_by_order[order_id] = ranked_items
 
+            item_rows = []
+            for idx, ir in enumerate(ranked_items, start=1):
+                f = ir.features or {}
+                item_rows.append({
+                    "rank": idx,
+                    "item_id": ir.item_id,
+                    "qty": int(ir.qty),
+                    "cold01": float(f.get("cold01", 0.0)),
+                    "w_ij": float(f.get("w_ij", 0.0)),
+                    "v_ij_eff": float(f.get("v_ij_eff", 0.0)),
+                    "liquid01": float(f.get("liquid01", 0.0)),
+                    "stack_limit": float(f.get("stack_limit", 0.0)),
+                    "fragile_score": float(f.get("fragile_score", 0.0)),
+                    "upright01": float(f.get("upright01", 0.0)),
+                    "sort_key": "",  # optional; fill if your sorter exposes it
+                })
+
             self.tracker.record_item_queue(
                 order_id,
-                ranked_items,
+                item_rows,
                 sorter_name=sorter_name,
                 item_scheme=item_scheme,
                 run_id=run_id,
-                reset=False,  # append per order
+                reset=False,
             )
 
         # Stash results for Phase-2

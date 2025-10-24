@@ -122,14 +122,14 @@ def assign_to_best_reefer(
     Steps:
       1) Among *open* reefers, choose the best-fitting by the given `ranking_scheme`.
       2) If none fit, optionally open a new reefer (per policy) that can fit the order.
-      3) Build a PackingPlan via `packing_policy.plan(...)`.
+      3) Build a LoadingPlan via `packing_policy.plan(...)`.
       4) Return an AssignOrder decision describing the action, or None if infeasible.
 
     Returns:
         AssignOrder | None
           - AssignOrder.truck_id
           - AssignOrder.order_id
-          - AssignOrder.plan (PackingPlan)
+          - AssignOrder.plan (LoadingPlan)
           - AssignOrder.opened_new_truck (bool)
           - AssignOrder.rationale (dict)
     """

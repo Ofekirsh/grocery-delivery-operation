@@ -2,7 +2,7 @@
 from __future__ import annotations
 from typing import Optional, List, Tuple, Dict, Any, Sequence
 
-from .base import PackingPlan, PackingPolicy, StateView
+from .base import LoadingPlan, PackingPolicy, StateView
 from src.heuristics.selectors.item_selector_priority import ItemRank
 
 
@@ -12,7 +12,7 @@ class SimplePackingPolicy(PackingPolicy):
     Single zone ('main'), lane 'left', layer 1. No geometry/constraints yet.
     """
 
-    def plan(self, state: StateView, truck_id: str, order_id: str) -> Optional[PackingPlan]:
+    def plan(self, state: StateView, truck_id: str, order_id: str) -> Optional[LoadingPlan]:
         seq: Sequence[ItemRank] = state.sorted_items(order_id)  # must be ItemRank objects
 
 
@@ -68,4 +68,4 @@ class SimplePackingPolicy(PackingPolicy):
             notes.append(
                 f"{ir.item_id} x{ir.qty} → {zone}/{lane}/{note_layer} (w={w:.1f}, α>0? {q_cold > 0.0}, haz={sep_tag == 'hazardous'})")
 
-        return PackingPlan(placements=placements, notes=notes)
+        return LoadingPlan(placements=placements, notes=notes)

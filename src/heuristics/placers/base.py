@@ -7,7 +7,7 @@ from typing import Any, Dict, Iterable, List, Optional, Protocol, Tuple
 
 
 @dataclass
-class PackingPlan:
+class LoadingPlan:
     """
     Result of within-truck packing for a single order.
     This can start simple (one logical zone/layer) and grow later.
@@ -27,7 +27,7 @@ class AssignOrder:
     """
     order_id: str
     truck_id: str
-    packing: PackingPlan
+    packing: LoadingPlan
     rationale: Any = ""  # why this truck / tie-break details
     opened_new_truck: bool = False
 
@@ -86,10 +86,10 @@ class FeasibilityService(Protocol):
 class PackingPolicy(Protocol):
     """
     Encapsulates item-level ordering and basic zoning/layering rules.
-    Should not change state; just compute a PackingPlan or raise/return None.
+    Should not change state; just compute a LoadingPlan or raise/return None.
     """
 
-    def plan(self, state: StateView, truck_id: str, order_id: str) -> Optional[PackingPlan]:
+    def plan(self, state: StateView, truck_id: str, order_id: str) -> Optional[LoadingPlan]:
         ...
 
 
@@ -137,13 +137,13 @@ class Placer(ABC):
         packing: PackingPolicy,
     ) -> Optional[AssignOrder]:
         """
-        Decide the target truck and compute a PackingPlan for `order_id`.
+        Decide the target truck and compute a LoadingPlan for `order_id`.
 
         Typical flow inside an implementation (for reference):
           1) enumerate candidate trucks (open first; maybe open new if policy allows)
           2) filter by feasibility (capacity, cold/weight/volume, coolers if needed)
           3) select best truck by tie-breaks (e.g., smallest leftover cold → volume → weight)
-          4) call packing.plan(...) to get a within-truck PackingPlan
+          4) call packing.plan(...) to get a within-truck LoadingPlan
           5) return AssignOrder(order_id, truck_id, packing, rationale=...)
 
         Return None if no feasible placement is possible under current policy.
