@@ -141,7 +141,7 @@ Unknown dims raise `ValueError`; infeasible trucks are filtered before ranking.
 
 ---
 
-### **Policy (`src/heuristics/placers/policy.py`)**
+### **Policy**
 
 Global knobs controlling placement behavior:
 
@@ -165,16 +165,16 @@ Encapsulates all constraint checks:
 
 ---
 
-### **Loading Policy (`src/heuristics/placers/packing.py`)**
+### **Loading Policy**
 
-Implements the intra-truck packing logic (`PackingPolicy.plan()`):
+Implements the intra-truck packing logic (`LoadingPolicy.plan()`):
 
 * Iterates ranked items and assigns them to:
 
   * **Zones**: `ambient`, `cold`, `haz`
   * **Lanes**: `left` vs `right` (balancing load)
   * **Layers**: `floor` vs `top` for fragile/upright items
-* Returns a structured `PackingPlan` (`placements` + `notes`).
+* Returns a structured `LoadingPlan` (`placements` + `notes`).
 
 ---
 
