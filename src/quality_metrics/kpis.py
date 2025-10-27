@@ -306,3 +306,40 @@ def splits_count(assignments_per_order: Mapping[str, int]) -> int:
         Count of orders where the total assignment is not exactly 1.
     """
     return sum(1 for cnt in assignments_per_order.values() if int(cnt) != 1)
+
+def avg_u_vol(uvol_list: Sequence[float]) -> float:
+    """Average volume utilization across all trucks."""
+    if not uvol_list:
+        return 0.0
+    return float(fsum(uvol_list) / len(uvol_list))
+
+
+def avg_u_w(uw_list: Sequence[float]) -> float:
+    """Average weight utilization across all trucks."""
+    if not uw_list:
+        return 0.0
+    return float(fsum(uw_list) / len(uw_list))
+
+
+def avg_u_cold(ucold_list: Sequence[float]) -> float:
+    """Average cold utilization across reefer trucks only."""
+    if not ucold_list:
+        return 0.0
+    return float(fsum(ucold_list) / len(ucold_list))
+
+
+def avg_u_bn(ubn_list: Sequence[float]) -> float:
+    """Average bottleneck efficiency across all trucks."""
+    if not ubn_list:
+        return 0.0
+    return float(fsum(ubn_list) / len(ubn_list))
+
+
+def cv_u_w(uw_list: Sequence[float]) -> float:
+    """CV of weight utilizations across opened trucks."""
+    return cv(uw_list)
+
+
+def cv_u_bn(ubn_list: Sequence[float]) -> float:
+    """CV of bottleneck efficiency across opened trucks."""
+    return cv(ubn_list)
