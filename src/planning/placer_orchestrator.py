@@ -152,7 +152,7 @@ class PlacerOrchestrator:
             return
 
         t = depot.get_truck(truck_id)
-        is_reefer = (str(getattr(t, "type", "")).lower() == "reefer")
+        is_reefer = ("reefer" in str(getattr(t, "type", "")).lower())
         Q = float(getattr(t, "total_capacity_m3", 0.0))
         Qc = float(getattr(t, "cold_capacity_m3", 0.0))
         W = float(getattr(t, "weight_limit_kg", 0.0))

@@ -11,7 +11,8 @@ from src.quality_metrics.kpis import (
     under_min_flag, cap_violation_flag,
     e_pack, n_trucks_opened, c_total, c_per_vol, c_per_w,
     cv_uvol, miss_vip, miss_due, avg_delay, vip_ontime,
-    under_min_count, cap_violations_count, splits_count
+    under_min_count, cap_violations_count, splits_count,
+    avg_u_vol, avg_u_w, avg_u_cold, avg_u_bn, cv_u_w, cv_u_bn
 )
 
 
@@ -404,6 +405,9 @@ class DayTracker:
 
         per_truck = []
         uvol_list = []
+        uw_list = []  # NEW
+        ucold_list = []  # NEW
+        ubn_list = []  # NEW
         tau_list = []
         cap_tuples = []
         fixed_costs = []
@@ -447,6 +451,13 @@ class DayTracker:
 
             # Collect for fleet KPIs
             uvol_list.append(uvol)
+            uw = u_w_k(used_w, W)
+            uw_list.append(uw)
+            ucold = u_cold_k(used_qc, Qc)
+            if is_reefer:
+                ucold_list.append(ucold)
+            ubn = u_bn_k(uvol, uw)
+            ubn_list.append(ubn)
             tau_list.append(tau_min)
             cap_tuples.append((used_v, Q, used_w, W, used_qc, Qc))
             fixed_costs.append(cost)
@@ -493,9 +504,13 @@ class DayTracker:
             "UNDER_MIN": under_min_cnt,
             "CAP_VIOLS": cap_viol_cnt,
             "SPLITS": splits_cnt,
+            "AVG_U_VOL": avg_u_vol(uvol_list),
+            "AVG_U_W": avg_u_w(uw_list),
+            "AVG_U_COLD": avg_u_cold(ucold_list),
+            "AVG_U_BN": avg_u_bn(ubn_list),
+            "CV_U_W": cv_u_w(uw_list),
+            "CV_U_BN": cv_u_bn(ubn_list),
             # raw sums for convenience
-            "SUM_q": float(self.sum_q),
-            "SUM_v_eff": float(self.sum_v_eff),
             "SUM_w": float(self.sum_w),
         }
 
@@ -557,7 +572,9 @@ class DayTracker:
                 "E_pack", "CV_Uvol",
                 "MISS_VIP", "MISS_DUE", "AVG_DELAY", "VIP_ONTIME",
                 "COLD_ON_DRY", "UNDER_MIN", "CAP_VIOLS", "SPLITS",
-                "SUM_q", "SUM_v_eff", "SUM_w",
+                "AVG_U_VOL", "AVG_U_W", "AVG_U_COLD", "AVG_U_BN",
+                "CV_U_W", "CV_U_BN",
+                "SUM_w",
             ]
             # add any unexpected keys to the end
             extra = [k for k in fleet.keys() if k not in cols]
