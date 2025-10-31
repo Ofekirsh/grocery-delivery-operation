@@ -53,7 +53,6 @@ def choose_best_open_reefer(
     priority scheme (default: cold → volume → weight). Smaller leftover is better.
     """
     best: Optional[Tuple[Tuple[float, ...], str]] = None
-
     for tid in state.open_trucks(type_filter="reefer"):
         if not feas.fits_order_on_truck(state, order_id, tid, policy):
             continue

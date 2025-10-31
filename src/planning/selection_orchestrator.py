@@ -80,6 +80,7 @@ class SelectionOrchestrator:
                     "stack_limit": float(f.get("stack_limit", 0.0)),
                     "fragile_score": float(f.get("fragile_score", 0.0)),
                     "upright01": float(f.get("upright01", 0.0)),
+                    "sep_tag": str(f.get("sep_tag", "Non-Food")),
                     "sort_key": "",  # optional; fill if your sorter exposes it
                 })
 

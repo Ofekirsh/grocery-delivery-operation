@@ -43,7 +43,7 @@ SCENARIOS = {
 def main():
     parser = argparse.ArgumentParser(description="Generate grocery delivery example")
     parser.add_argument("--output", default="../problems/problem_1", help="Output directory name")
-    parser.add_argument("--scenario", choices=["small", "medium", "large"], default="small", help="Use predefined scenario")
+    parser.add_argument("--scenario", choices=["small", "medium", "large"], default="medium", help="Use predefined scenario")
     parser.add_argument("--seed", type=int, help="Random seed")
     parser.add_argument("--orders", type=int, help="Override number of orders")
     parser.add_argument("--customers", type=int, help="Override number of customers")

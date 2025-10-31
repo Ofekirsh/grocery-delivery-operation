@@ -31,8 +31,8 @@ class SimplePackingPolicy(PackingPolicy):
 
             f = ir.features or {}
             # --- features with safe defaults ---
-            w = float(f.get("w", 0.0))  # line weight
-            q_cold = float(f.get("q_cold", 0.0))  # line cold volume
+            w = float(f.get("w_ij", 0.0))  # line weight
+            cold01 = float(f.get("cold01", 0.0))  # line cold volume
             fragile_score = float(f.get("fragile_score", 0))  # 0 regular, 1 delicate, 2 fragile
             upright01 = int(f.get("upright01", 0))  # 1 = upright-only
             sep_tag = str(f.get("sep_tag", "non_food")).lower()  # "hazardous"/"food"/"non_food"/...
@@ -40,7 +40,7 @@ class SimplePackingPolicy(PackingPolicy):
             # --- zone selection (Separation + Cold) ---
             if sep_tag == "hazardous":
                 zone = "haz"  # isolated
-            elif q_cold > 0.0:
+            elif cold01 > 0.0:
                 zone = "cold"  # reefer zone
             else:
                 zone = "ambient"
@@ -66,6 +66,6 @@ class SimplePackingPolicy(PackingPolicy):
 
             # optional notes for debug/audit
             notes.append(
-                f"{ir.item_id} x{ir.qty} → {zone}/{lane}/{note_layer} (w={w:.1f}, α>0? {q_cold > 0.0}, haz={sep_tag == 'hazardous'})")
+                f"{ir.item_id} x{ir.qty} → {zone}/{lane}/{note_layer} (w={w:.1f}, cold={cold01 > 0.0}, haz={sep_tag == 'hazardous'})")
 
         return LoadingPlan(placements=placements, notes=notes)

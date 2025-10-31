@@ -42,6 +42,7 @@ def build_sorted_items_map_from_logs(tracker) -> Dict[str, List[ItemRank]]:
                         "stack_limit": float(r["stack_limit"]),
                         "fragile_score": float(r["fragile_score"]),
                         "upright01": float(r["upright01"]),
+                        "sep_tag": str(r["sep_tag"])
                     },
                 )
             )
@@ -68,6 +69,7 @@ def load_instance(base_dir: str = "../problems/problem_1"):
     depot_entry = depots_data[0]  # assuming one depot
     depot_id = depot_entry["depot_id"]
     depot_location = depot_entry.get("location", "unknown")
+    depot_available_trucks =depot_entry["available_trucks"]
 
     # === Trucks ===
     trucks_data = json.load((base / "trucks.json").open())
@@ -85,11 +87,16 @@ def load_instance(base_dir: str = "../problems/problem_1"):
             cooler_capacity_m3=t.get("cooler_capacity_m3", 0.0),
 
         )
+    available_trucks_for_depot = {
+        truck_id: trucks[truck_id]
+        for truck_id in depot_available_trucks
+        if truck_id in trucks
+    }
 
     depot = Depot(
         depot_id=depot_id,
         location=depot_location,
-        available_trucks=trucks,
+        available_trucks=available_trucks_for_depot,
     )
 
     # === Items ===

@@ -369,6 +369,7 @@ class DayTracker:
                 "stack_limit": float(_get(r, "stack_limit", 0.0)),
                 "fragile_score": float(_get(r, "fragile_score", 0.0)),
                 "upright01": float(_get(r, "upright01", 0.0)),
+                "sep_tag": str(_get(r, "sep_tag", "")),
                 "sort_key": str(_get(r, "sort_key", "")),
             })
 

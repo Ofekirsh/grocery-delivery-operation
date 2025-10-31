@@ -27,30 +27,62 @@ INPUT_DIR = "../problems/problem_1"
 OUTPUT_DIR = Path("../reports")
 SELECTION_OUTPUT = OUTPUT_DIR / "selection"
 PLACEMENT_OUTPUT = OUTPUT_DIR / "placement"
-
+"""
 # Phase 1: Selection Schemes
 ORDER_SCHEME = ("vip", "due", "alpha", "v_eff")
 ITEM_SCHEME = ("cold", "weight", "v_eff", "liquid", "stack_limit", "fragile", "upright")
-
+"""
 # Phase 2: Placement Policy
 ALLOW_OPEN_NEW_REEFER_A = True
 ALLOW_COLD_IN_DRY_B = True
 PER_TRUCK_COOLER_M3 = 1.5
 ALLOW_OPEN_NEW_DRY_C = True
 ALPHA_THRESHOLD = 0.1
-
+"""
 # Phase 2: Truck Ranking Schemes
 REEFER_SCHEME_A = ("cold", "volume", "weight")
 REEFER_SCHEME_B = ("cold", "volume", "weight")
 DRY_SCHEME_B = ("volume", "weight")
 DRY_SCHEME_C = ("volume", "weight")
-
+"""
 # Departure Strategy
 DEPART_STRATEGY = "min_util"  # or "time"
 MIN_UTIL_SLACK = 0.0
 DEPART_TIME = None  # or datetime object
 
-
+ORDER_SCHEME=(
+    "due",
+    "vip",
+    "v_eff",
+    "alpha"
+)
+ITEM_SCHEME=(
+    "weight",
+    "stack_limit",
+    "liquid",
+    "fragile",
+    "v_eff",
+    "upright",
+    "cold"
+)
+REEFER_SCHEME_A=(
+    "weight",
+    "volume",
+    "cold"
+)
+REEFER_SCHEME_B=(
+    "cold",
+    "volume",
+    "weight"
+)
+DRY_SCHEME_B=(
+    "volume",
+    "weight"
+)
+DRY_SCHEME_C=(
+    "weight",
+    "volume"
+)
 # ============================================================================
 # MAIN
 # ============================================================================

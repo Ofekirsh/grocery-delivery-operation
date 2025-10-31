@@ -27,6 +27,7 @@ class ItemRankRow:
     stack_limit: float
     fragile_score: float
     upright01: float
+    sep_tag: str
     sort_key: Tuple
 
 
@@ -101,7 +102,7 @@ class ItemLevelSorter:
         """
         feats = self._get_item_features(state, order_id)
         rows_raw: List[Tuple[str, int, float, float, float, float, float, float, float]] = []
-        # tuple layout: (item_id, qty, cold01, w_ij, v_ij_eff, liquid01, stack_limit, fragile_score, upright01)
+        # tuple layout: (item_id, qty, cold01, w_ij, v_ij_eff, liquid01, stack_limit, fragile_score, upright01, sep_tag)
 
         for item, qty in feats:
             iid = str(item.item_id)
@@ -133,8 +134,9 @@ class ItemLevelSorter:
                 fragile_score = 1.0
             else:
                 fragile_score = 0.0
+            sep_tag = str(getattr(item, "separation_tag", "non_food")).lower()
 
-            rows_raw.append((iid, qty, cold01, w_ij, v_ij_eff, liquid01, stack_limit, fragile_score, upright01))
+            rows_raw.append((iid, qty, cold01, w_ij, v_ij_eff, liquid01, stack_limit, fragile_score, upright01, sep_tag))
 
         # build keys per scheme, then sort
         keyed: List[Tuple[Tuple, Tuple]] = []
@@ -147,7 +149,7 @@ class ItemLevelSorter:
         # produce outputs
         self.last_rank_rows = []
         ranked: List[ItemRank] = []
-        for i, (key, (iid, qty, cold01, w_ij, v_ij_eff, liquid01, stack_limit, fragile_score, upright01)) in enumerate(keyed):
+        for i, (key, (iid, qty, cold01, w_ij, v_ij_eff, liquid01, stack_limit, fragile_score, upright01, sep_tag)) in enumerate(keyed):
             self.last_rank_rows.append(
                 ItemRankRow(
                     rank=i + 1,
@@ -160,6 +162,7 @@ class ItemLevelSorter:
                     stack_limit=float(stack_limit),
                     fragile_score=float(fragile_score),
                     upright01=float(upright01),
+                    sep_tag=str(sep_tag),
                     sort_key=key,
                 )
             )
@@ -175,6 +178,7 @@ class ItemLevelSorter:
                         "stack_limit": float(stack_limit),
                         "fragile_score": float(fragile_score),
                         "upright01": float(upright01),
+                        "sep_tag": str(sep_tag)
                     },
                 )
             )
@@ -191,7 +195,7 @@ class ItemLevelSorter:
         Map the configured `scheme` to a lexicographic tuple.
         Directions are fixed as documented in the class docstring.
         """
-        (iid, qty, cold01, w_ij, v_ij_eff, liquid01, stack_limit, fragile_score, upright01) = row
+        (iid, qty, cold01, w_ij, v_ij_eff, liquid01, stack_limit, fragile_score, upright01, sep_tag) = row
 
         key_parts: List[object] = []
         for dim in self.scheme:
